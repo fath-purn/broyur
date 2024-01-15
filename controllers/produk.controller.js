@@ -88,14 +88,62 @@ const createProduk = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const produk = await prisma.produk.findMany({
-      include: {
-        media: true,
-      },
-      orderBy: {
-        created: "desc",
-      },
-    });
+    let produk = null;
+
+    if(req.query.search) {
+      const { search } = req.query;
+      produk = await prisma.produk.findMany({
+        where: {
+          nama: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        include: {
+          media: true,
+        },
+      });
+    } else if (req.query.alamat) {
+      const {alamat} = req.query;
+      produk = await prisma.produk.findMany({
+        where: {
+          user: {
+            alamat: alamat.toUpperCase(),
+          }
+        },
+        include: {
+          media: true,
+        },
+      });
+    } else {
+      produk = await prisma.produk.findMany({
+        include: {
+          media: true,
+          user: true,
+        },
+        orderBy: {
+          created: "desc",
+        },
+      });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
     return res.status(200).json({
       status: false,

@@ -10,16 +10,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// file: schema.prisma
-
-// file: schema.prisma
+// model User {
+//   id        Int         @id @default(autoincrement())
+//   nama      String
+//   email     String      @unique
+// }
 
 model User {
   id        Int         @id @default(autoincrement())
   nama      String
   email     String      @unique
   password  String
-  alamat    String?
+  alamat    Alamat?
   role      Role
   media     Media[]
   transaksi Transaksi[]
@@ -99,4 +101,13 @@ enum Status {
 enum Pembayaran {
   CASH
   TRANSFER
+}
+
+enum Alamat {
+  TELUK
+  BERKOH
+  TANJUNG
+  KARANGKLESEM
+  PURWOKERTO_KIDUL
+  KARANGPUCUNG
 }
