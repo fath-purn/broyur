@@ -1,23 +1,22 @@
 const Joi = require("joi");
 
 // Skema validasi untuk pengguna
-const produkValidationSchema = Joi.object({
+const transaksiValidationSchema = Joi.object({
+  id_produk: Joi.number().required(),
   jumlah: Joi.number().required(),
-  harga: Joi.number().required(),
   alamat: Joi.string().required(),
-  pembayaran: Joi.string().valid("SELESAI", "MENUNGGU", "DITOLAK", "DIPROSES", "DIKONFIRMASI").required(),
-  status: Joi.string().valid("TRANSFER", "CASH").required(),
+  status: Joi.string().valid("SELESAI", "MENUNGGU", "DITOLAK", "DIPROSES", "DIKONFIRMASI").required(),
+  pembayaran: Joi.string().valid("TRANSFER", "CASH").required(),
 });
 
-const produkUpdateValidationSchema = Joi.object({
-    jumlah: Joi.string(),
-    harga: Joi.string(),
+const transaksiUpdateValidationSchema = Joi.object({
+    jumlah: Joi.number(),
     alamat: Joi.number(),
-    pembayaran: Joi.string().valid("SELESAI", "MENUNGGU", "DITOLAK", "DIPROSES", "DIKONFIRMASI"),
-    status: Joi.string().valid("TRANSFER", "CASH"),
+    status: Joi.string().valid("SELESAI", "MENUNGGU", "DITOLAK", "DIPROSES", "DIKONFIRMASI"),
+    pembayaran: Joi.string().valid("TRANSFER", "CASH"),
 });
 
 module.exports = {
-  produkValidationSchema,
-  produkUpdateValidationSchema,
+  transaksiValidationSchema,
+  transaksiUpdateValidationSchema,
 };

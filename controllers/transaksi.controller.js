@@ -1,11 +1,13 @@
 const prisma = require("../libs/prisma");
-const { produkValidationSchema, produkUpdateValidationSchema } = require("../validations/produk.validation");
-const imagekit = require("../libs/imagekit");
-const path = require("path");
+const {
+  transaksiValidationSchema,
+  transaksiUpdateValidationSchema,
+} = require("../validations/transaksi.validation");
 
 const createTransaksi = async (req, res, next) => {
   try {
-    const { value, error } = produkValidationSchema.validate(req.body);
+    const { user } = req;
+    const { value, error } = transaksiValidationSchema.validate(req.body);
 
     if (error) {
       return res.status(400).json({
@@ -16,59 +18,88 @@ const createTransaksi = async (req, res, next) => {
       });
     }
 
-    const { nama, deskripsi, harga, satuan, stok, kategori } = value;
+    const { id_produk, jumlah, alamat, pembayaran, status } = value;
 
-    const createProduk = await prisma.produk.create({
-      data: {
-        nama,
-        deskripsi,
-        harga,
-        satuan,
-        stok,
-        kategori,
+    const checkProduk = await prisma.produk.findUnique({
+      where: {
+        id: Number(id_produk),
       },
     });
 
-    // fungsi uploadFiles untuk imagekit
-    const uploadFiles = async (files, id_produk) => {
-      try {
-        const gambarPromises = files.map(async (file) => {
-          let strFile = file.buffer.toString("base64");
+    if (!checkProduk) {
+      return res.status(400).json({
+        status: false,
+        message: "Bad Request",
+        err: "Produk tidak ditemukan",
+        data: null,
+      });
+    }
 
-          let { url, fileId } = await imagekit.upload({
-            fileName: Date.now() + path.extname(file.originalname),
-            file: strFile,
-          });
+    if (checkProduk.stok < jumlah) {
+      return res.status(400).json({
+        status: false,
+        message: "Bad Request",
+        err: "Stok tidak cukup",
+        data: null,
+      });
+    }
 
-          const gambar = await prisma.media.create({
-            data: {
-              id_link: fileId,
-              link: url,
-              id_produk: id_produk,
-            },
-          });
+    let stokBaru = checkProduk.stok - jumlah;
 
-          return gambar;
-        });
+    await prisma.produk.update({
+      where: {
+        id: Number(id_produk),
+      },
+      data: {
+        stok: stokBaru,
+      },
+    });
 
-        return Promise.all(gambarPromises);
-      } catch (err) {
-        return res.status(404).json({
-          status: false,
-          message: "Bad Request!",
-          err: err.message,
-          data: null,
-        });
+    let harga = checkProduk.harga * Number(jumlah);
+
+    const checkTransaksi = await prisma.transaksi.findFirst({
+      where: {
+        id_produk: id_produk,
+        id_user: user.id,
       }
-    };
+    });
 
-    await uploadFiles(req.files, createProduk.id);
+    if(checkTransaksi) {
+      const updateTransaksi = await prisma.transaksi.update({
+        where: {
+          id: checkTransaksi.id,
+        },
+        data: {
+          jumlah: checkTransaksi.jumlah + jumlah,
+        }
+      });
+
+      return res.status(201).json({
+        status: true,
+        message: "Transaksi berhasil dibuat mang ea",
+        err: null,
+        data: updateTransaksi,
+      });
+
+    }
+
+    const createTransaksi = await prisma.transaksi.create({
+      data: {
+        id_user: Number(user.id),
+        id_produk: Number(id_produk),
+        jumlah,
+        harga: harga,
+        alamat,
+        pembayaran,
+        status,
+      },
+    });
 
     return res.status(201).json({
       status: true,
-      message: "Produk berhasil dibuat",
+      message: "Transaksi berhasil dibuat",
       err: null,
-      data: createProduk,
+      data: createTransaksi,
     });
   } catch (err) {
     next(err);
@@ -83,9 +114,18 @@ const createTransaksi = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const produk = await prisma.produk.findMany({
+    const { user } = req;
+    
+    const transaksi = await prisma.transaksi.findMany({
+      where: {
+        id_user: user.id,
+      },
       include: {
-        media: true,
+        produk: {
+          include: {
+            media: true,
+          },
+        },
       },
       orderBy: {
         created: "desc",
@@ -96,7 +136,7 @@ const getAll = async (req, res, next) => {
       status: false,
       message: "OK!",
       err: null,
-      data: produk,
+      data: transaksi,
     });
   } catch (err) {
     next(err);
@@ -111,28 +151,37 @@ const getAll = async (req, res, next) => {
 
 const getById = async (req, res, next) => {
   try {
+    const { user } = req;
     const { id } = req.params;
-    const produkById = await prisma.produk.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        media: true,
+
+    const transaksiById = await prisma.transaksi.findUnique({
+      where: {
+        id: parseInt(id),
+        id_user: user.id,
       },
+      include: {
+        produk: {
+          include: {
+            media: true,
+          }
+        }
+      }
     });
 
-    if (!produkById) {
+    if (!transaksiById) {
       return res.status(400).json({
         status: false,
         message: "Bad Request!",
-        err: "Produk tidak ditemukan",
+        err: "Transaksi tidak ditemukan",
         data: null,
       });
     }
 
     return res.status(200).json({
       status: true,
-      message: "Produk retrieved successfully",
+      message: "Transaksi berhasil dibuat",
       err: null,
-      data: produkById,
+      data: transaksiById,
     });
   } catch (err) {
     next(err);
@@ -147,8 +196,9 @@ const getById = async (req, res, next) => {
 
 const updateTransaksi = async (req, res, next) => {
   try {
+    const { user } = req;
     const { id } = req.params;
-    const { value, error } = produkUpdateValidationSchema.validate(req.body);
+    const { value, error } = transaksiUpdateValidationSchema.validate(req.body);
 
     if (error) {
       return res.status(400).json({
@@ -159,16 +209,32 @@ const updateTransaksi = async (req, res, next) => {
       });
     }
 
-    const { nama, deskripsi, harga, satuan, stok, kategori } = value;
+    const { jumlah, alamat, pembayaran, status } = value;
+
+    const checkTransaksi = await prisma.transaksi.findUnique({
+      where: {
+        id: Number(id),
+        id_user: user.id,
+      },
+    });
+
+    if (!checkTransaksi) {
+      return res.status(400).json({
+        status: false,
+        message: "Bad Request",
+        err: "Transaksi tidak ditemukan",
+        data: null,
+      });
+    }
 
     const checkProduk = await prisma.produk.findUnique({
       where: {
-        id: Number(id),
+        id: Number(checkTransaksi.id_produk),
       },
     });
 
     if (!checkProduk) {
-      return res.status(404).json({
+      return res.status(400).json({
         status: false,
         message: "Bad Request",
         err: "Produk tidak ditemukan",
@@ -176,25 +242,73 @@ const updateTransaksi = async (req, res, next) => {
       });
     }
 
-    const updateProduk = await prisma.produk.update({
+    if (jumlah <= 0) {
+      return res.status(400).json({
+        status: false,
+        message: "Bad Request",
+        err: "Jumlah produk tidak mencukupi",
+        data: null,
+      });
+    }
+
+    if (jumlah) {
+      let stokBaru = null;
+
+      if (jumlah < checkTransaksi.jumlah) {
+        stokBaru = checkProduk.stok + (checkTransaksi.jumlah - jumlah);
+      }
+
+      if (jumlah > checkTransaksi.jumlah) {
+        stokBaru = checkProduk.stok + (checkTransaksi.jumlah - jumlah);
+      }
+
+      if (jumlah === checkTransaksi.jumlah) {
+        stokBaru = checkTransaksi.stok;
+      }
+
+      if (stokBaru < 0) {
+        return res.status(400).json({
+          status: false,
+          message: "Bad Request",
+          err: "Stok tidak cukup",
+          data: null,
+        });
+      }
+
+      await prisma.produk.update({
+        where: {
+          id: Number(checkTransaksi.id_produk),
+        },
+        data: {
+          stok: stokBaru,
+        },
+      });
+    }
+
+    let harga = null;
+
+    if (jumlah) {
+      harga = checkProduk.harga * Number(jumlah);
+    }
+
+    const updateTransaksi = await prisma.transaksi.update({
       where: {
         id: Number(id),
       },
       data: {
-        nama,
-        deskripsi,
-        harga: harga ? Number(harga) : checkProduk.harga,
-        satuan,
-        stok: stok ? Number(stok) : checkProduk.stok,
-        kategori,
+        jumlah: jumlah ? jumlah : checkTransaksi.jumlah,
+        harga: jumlah ? harga : checkTransaksi.harga,
+        alamat,
+        pembayaran,
+        status,
       },
     });
 
     return res.status(201).json({
       status: true,
-      message: "Produk berhasil dibuat",
+      message: "Transaksi berhasil di update",
       err: null,
-      data: updateProduk,
+      data: updateTransaksi,
     });
   } catch (err) {
     next(err);
@@ -209,50 +323,36 @@ const updateTransaksi = async (req, res, next) => {
 
 const deleteTransaksi = async (req, res, next) => {
   try {
+    const { user } = req;
     const { id } = req.params;
 
-    const produk = await prisma.produk.findUnique({
-      where: { id: parseInt(id) },
+    const transaksi = await prisma.transaksi.findUnique({
+      where: { id: Number(id), id_user: user.id },
     });
 
-    if (!produk) {
+    if (!transaksi) {
       return res.status(400).json({
         status: false,
         message: "Bad Request!",
-        err: err.message,
+        err: "Transaksi tidak ditemukan",
         data: null,
       });
     }
 
-    const media = await prisma.media.findMany({
+    const checkProduk = await prisma.produk.findUnique({
       where: {
-        id_produk: Number(id),
+        id: Number(transaksi.id_produk),
       },
     });
 
-    // delete gambar di imagekit
-    const deleteGambar = async (gambar) => {
-      try {
-        const gambarPromises = gambar.map(async (g) => {
-          if (g.id_link !== "-") {
-            await imagekit.deleteFile(g.id_link);
-          }
-        });
-
-        return Promise.all(gambarPromises);
-      } catch (err) {
-        throw err;
-      }
-    };
-
-    await deleteGambar(media);
-    await prisma.media.deleteMany({
-      where: {
-        id_artikel: Number(id),
+    await prisma.produk.update({
+      where: { id: Number(transaksi.id_produk) },
+      data: {
+        stok: checkProduk.stok + transaksi.jumlah,
       },
     });
 
-    await prisma.produk.delete({
+    await prisma.transaksi.delete({
       where: {
         id: Number(id),
       },

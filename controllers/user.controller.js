@@ -10,9 +10,7 @@ const {
 // register
 const register = async (req, res, next) => {
   try {
-    console.log(req.body, "body");
     const { value, error } = await registerValidationSchema.validate(req.body);
-    //   console.log(value, "value");D
 
     if (error) {
       return res.status(400).json({

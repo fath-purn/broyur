@@ -1,5 +1,13 @@
 const router = require("express").Router();
-const { createProduk, getAll, getById, updateProduk, deleteProduk } = require("../controllers/produk.controller");
+const {
+  createProduk,
+  getAll,
+  getById,
+  updateProduk,
+  deleteProduk,
+  getAllPenjual,
+  getByIdPenjual,
+} = require("../controllers/produk.controller");
 const {
   checkAdminPenjual,
   checkPembeli,
@@ -8,10 +16,18 @@ const {
 const verifyToken = require("../libs/verifyToken");
 const { upload } = require("../libs/multer");
 
-router.post("/", upload.array("image"), verifyToken, checkAdminPenjual, createProduk);
+router.post(
+  "/add",
+  upload.array("image"),
+  verifyToken,
+  checkAdminPenjual,
+  createProduk
+);
 router.get("/", getAll);
+router.get("/penjual", verifyToken, checkAdminPenjual, getAllPenjual);
+router.get("/penjual/:id", verifyToken, checkAdminPenjual, getByIdPenjual);
 router.get("/:id", getById);
-router.put("/:id", verifyToken, checkAdminPenjual, updateProduk);
-router.delete("/:id", verifyToken, checkAdminPenjual, deleteProduk);
+router.put("/update/:id", verifyToken, checkAdminPenjual, updateProduk);
+router.delete("/delete/:id", verifyToken, checkAdminPenjual, deleteProduk);
 
 module.exports = router;

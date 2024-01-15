@@ -1,10 +1,14 @@
 const prisma = require("../libs/prisma");
-const { produkValidationSchema, produkUpdateValidationSchema } = require("../validations/produk.validation");
+const {
+  produkValidationSchema,
+  produkUpdateValidationSchema,
+} = require("../validations/produk.validation");
 const imagekit = require("../libs/imagekit");
 const path = require("path");
 
 const createProduk = async (req, res, next) => {
   try {
+    const { user } = req;
     const { value, error } = produkValidationSchema.validate(req.body);
 
     if (error) {
@@ -20,6 +24,7 @@ const createProduk = async (req, res, next) => {
 
     const createProduk = await prisma.produk.create({
       data: {
+        id_user: user.id,
         nama,
         deskripsi,
         harga,
@@ -109,6 +114,36 @@ const getAll = async (req, res, next) => {
   }
 };
 
+const getAllPenjual = async (req, res, next) => {
+  try {
+    const { user } = req;
+    const produk = await prisma.produk.findMany({
+      where: { id_user: user.id },
+      include: {
+        media: true,
+      },
+      orderBy: {
+        created: "desc",
+      },
+    });
+
+    return res.status(200).json({
+      status: false,
+      message: "OK!",
+      err: null,
+      data: produk,
+    });
+  } catch (err) {
+    next(err);
+    return res.status(400).json({
+      status: false,
+      message: "Bad Request",
+      err: err.message,
+      data: null,
+    });
+  }
+};
+
 const getById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -145,8 +180,46 @@ const getById = async (req, res, next) => {
   }
 };
 
+const getByIdPenjual = async (req, res, next) => {
+  try {
+    const { user } = req;
+    const { id } = req.params;
+    const produkById = await prisma.produk.findUnique({
+      where: { id: parseInt(id), id_user: user.id },
+      include: {
+        media: true,
+      },
+    });
+
+    if (!produkById) {
+      return res.status(400).json({
+        status: false,
+        message: "Bad Request!",
+        err: "Produk tidak ditemukan",
+        data: null,
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Produk retrieved successfully",
+      err: null,
+      data: produkById,
+    });
+  } catch (err) {
+    next(err);
+    return res.status(400).json({
+      status: false,
+      message: "Bad Request",
+      err: err.message,
+      data: null,
+    });
+  }
+};
+
 const updateProduk = async (req, res, next) => {
   try {
+    const { user } = req;
     const { id } = req.params;
     const { value, error } = produkUpdateValidationSchema.validate(req.body);
 
@@ -164,6 +237,7 @@ const updateProduk = async (req, res, next) => {
     const checkProduk = await prisma.produk.findUnique({
       where: {
         id: Number(id),
+        id_user: user.id,
       },
     });
 
@@ -179,6 +253,7 @@ const updateProduk = async (req, res, next) => {
     const updateProduk = await prisma.produk.update({
       where: {
         id: Number(id),
+        id_user: user.id,
       },
       data: {
         nama,
@@ -209,17 +284,21 @@ const updateProduk = async (req, res, next) => {
 
 const deleteProduk = async (req, res, next) => {
   try {
+    const { user } = req;
     const { id } = req.params;
 
     const produk = await prisma.produk.findUnique({
-      where: { id: parseInt(id) },
+      where: {
+        id: parseInt(id),
+        id_user: user.id,
+      },
     });
 
     if (!produk) {
       return res.status(400).json({
         status: false,
         message: "Bad Request!",
-        err: err.message,
+        err: "Produk tidak ditemukan",
         data: null,
       });
     }
@@ -248,7 +327,7 @@ const deleteProduk = async (req, res, next) => {
     await deleteGambar(media);
     await prisma.media.deleteMany({
       where: {
-        id_artikel: Number(id),
+        id_produk: Number(id),
       },
     });
 
@@ -281,4 +360,6 @@ module.exports = {
   getById,
   updateProduk,
   deleteProduk,
+  getAllPenjual,
+  getByIdPenjual,
 };

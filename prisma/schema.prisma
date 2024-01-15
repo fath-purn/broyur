@@ -12,43 +12,48 @@ datasource db {
 
 // file: schema.prisma
 
+// file: schema.prisma
+
 model User {
-  id       Int      @id @default(autoincrement())
-  nama     String
-  email    String   @unique
-  password String
-  alamat   String?
-  role     Role
-  media    Media[]
+  id        Int         @id @default(autoincrement())
+  nama      String
+  email     String      @unique
+  password  String
+  alamat    String?
+  role      Role
+  media     Media[]
   transaksi Transaksi[]
+  produk    Produk[]
 
   created DateTime @default(now())
   updated DateTime @updatedAt
 }
 
 model Produk {
-  id          Int       @id @default(autoincrement())
-  nama        String
-  deskripsi   String
-  harga       Float
-  satuan      String
-  stok        Int
-  kategori    Kategori
-  media       Media[]
-  transaksi   Transaksi[]
+  id        Int         @id @default(autoincrement())
+  nama      String
+  deskripsi String
+  harga     Float
+  satuan    String
+  stok      Int
+  kategori  Kategori
+  media     Media[]
+  transaksi Transaksi[]
+  id_user   Int
+  user User @relation(fields: [id_user], references: [id])
 
   created DateTime @default(now())
   updated DateTime @updatedAt
 }
 
 model Media {
-  id        Int       @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   id_produk Int?
   id_user   Int?
   id_link   String
   link      String
-  produk    Produk?    @relation(fields: [id_produk], references: [id])
-  user      User?      @relation(fields: [id_user], references: [id])
+  produk    Produk? @relation(fields: [id_produk], references: [id])
+  user      User?   @relation(fields: [id_user], references: [id])
 
   created DateTime @default(now())
   updated DateTime @updatedAt
@@ -61,10 +66,10 @@ model Transaksi {
   jumlah     Int
   harga      Float
   alamat     String
-  status     Status
+  status     Status     @default(DIPROSES)
   pembayaran Pembayaran
-  user       User      @relation(fields: [id_user], references: [id])
-  produk     Produk    @relation(fields: [id_produk], references: [id])
+  user       User       @relation(fields: [id_user], references: [id])
+  produk     Produk     @relation(fields: [id_produk], references: [id])
 
   created DateTime @default(now())
   updated DateTime @updatedAt
