@@ -9,3 +9,77 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// file: schema.prisma
+
+model User {
+  id       Int      @id @default(autoincrement())
+  nama     String
+  email    String   @unique
+  password String
+  alamat   String
+  role     Role
+  media    Media[]
+  transaksi Transaksi[]
+}
+
+model Produk {
+  id          Int       @id @default(autoincrement())
+  nama        String
+  deskripsi   String
+  harga       Float
+  satuan      String
+  stok        Int
+  kategori    Kategori
+  media       Media[]
+  transaksi   Transaksi[]
+}
+
+model Media {
+  id        Int       @id @default(autoincrement())
+  id_produk Int
+  id_user   Int
+  id_link   String
+  link      String
+  produk    Produk    @relation(fields: [id_produk], references: [id])
+  user      User      @relation(fields: [id_user], references: [id])
+}
+
+model Transaksi {
+  id         Int        @id @default(autoincrement())
+  id_user    Int
+  id_produk  Int
+  jumlah     Int
+  harga      Float
+  alamat     String
+  status     Status
+  pembayaran Pembayaran
+  user       User      @relation(fields: [id_user], references: [id])
+  produk     Produk    @relation(fields: [id_produk], references: [id])
+}
+
+enum Role {
+  ADMIN
+  PENJUAL
+  PEMBELI
+}
+
+enum Kategori {
+  SAYUR
+  DAGING_DAN_IKAN
+  BUAH
+  TELUR_TAHU_TEMPE
+}
+
+enum Status {
+  SELESAI
+  MENUNGGU
+  DITOLAK
+  DIPROSES
+  DIKONFIRMASI
+}
+
+enum Pembayaran {
+  CASH
+  TRANSFER
+}
