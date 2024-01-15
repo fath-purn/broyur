@@ -3,6 +3,7 @@ const {
   transaksiValidationSchema,
   transaksiUpdateValidationSchema,
 } = require("../validations/transaksi.validation");
+const Joi = require('joi');
 
 const createTransaksi = async (req, res, next) => {
   try {
@@ -61,17 +62,17 @@ const createTransaksi = async (req, res, next) => {
       where: {
         id_produk: id_produk,
         id_user: user.id,
-      }
+      },
     });
 
-    if(checkTransaksi) {
+    if (checkTransaksi) {
       const updateTransaksi = await prisma.transaksi.update({
         where: {
           id: checkTransaksi.id,
         },
         data: {
           jumlah: checkTransaksi.jumlah + jumlah,
-        }
+        },
       });
 
       return res.status(201).json({
@@ -80,7 +81,6 @@ const createTransaksi = async (req, res, next) => {
         err: null,
         data: updateTransaksi,
       });
-
     }
 
     const createTransaksi = await prisma.transaksi.create({
@@ -115,22 +115,62 @@ const createTransaksi = async (req, res, next) => {
 const getAll = async (req, res, next) => {
   try {
     const { user } = req;
+    let transaksi = null;
+
+    const statusValidationSchema = Joi.object({
+      status: Joi.string().valid('SELESAI', 'MENUNGGU', 'DITOLAK', 'DIPROSES', 'DIKONFIRMASI').allow(''),
+    });
     
-    const transaksi = await prisma.transaksi.findMany({
-      where: {
-        id_user: user.id,
-      },
-      include: {
-        produk: {
-          include: {
-            media: true,
+    const convertedQuery = {
+      status: req.query.status ? req.query.status.toUpperCase() : undefined,
+    };
+    
+    const { error } = statusValidationSchema.validate(convertedQuery);
+    
+    if (error) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: error.message,
+        data: null,
+      });
+    }
+    
+    if (req.query.status) {
+      const {status} = req.query;
+      transaksi = await prisma.transaksi.findMany({
+        where: {
+          id_user: user.id,
+          status: status.toUpperCase(),
+        },
+        include: {
+          produk: {
+            include: {
+              media: true,
+            },
           },
         },
-      },
-      orderBy: {
-        created: "desc",
-      },
-    });
+        orderBy: {
+          created: "desc",
+        },
+      })
+    } else {
+      transaksi = await prisma.transaksi.findMany({
+        where: {
+          id_user: user.id,
+        },
+        include: {
+          produk: {
+            include: {
+              media: true,
+            },
+          },
+        },
+        orderBy: {
+          created: "desc",
+        },
+      });
+    }
 
     return res.status(200).json({
       status: false,
@@ -163,9 +203,9 @@ const getById = async (req, res, next) => {
         produk: {
           include: {
             media: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     if (!transaksiById) {
