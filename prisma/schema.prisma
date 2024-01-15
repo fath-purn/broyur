@@ -21,6 +21,9 @@ model User {
   role     Role
   media    Media[]
   transaksi Transaksi[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
 }
 
 model Produk {
@@ -33,16 +36,22 @@ model Produk {
   kategori    Kategori
   media       Media[]
   transaksi   Transaksi[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
 }
 
 model Media {
   id        Int       @id @default(autoincrement())
-  id_produk Int
-  id_user   Int
+  id_produk Int?
+  id_user   Int?
   id_link   String
   link      String
-  produk    Produk    @relation(fields: [id_produk], references: [id])
-  user      User      @relation(fields: [id_user], references: [id])
+  produk    Produk?    @relation(fields: [id_produk], references: [id])
+  user      User?      @relation(fields: [id_user], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
 }
 
 model Transaksi {
@@ -56,6 +65,9 @@ model Transaksi {
   pembayaran Pembayaran
   user       User      @relation(fields: [id_user], references: [id])
   produk     Produk    @relation(fields: [id_produk], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
 }
 
 enum Role {

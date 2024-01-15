@@ -206,6 +206,70 @@ const checkAdmin = async (req, res, next) => {
   }
 };
 
+const checkPembeli = async (req, res, next) => {
+  try {
+    const { user } = req;
+
+    const userDetail = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+        role: "PEMBELI", // Filter berdasarkan role 'admin'
+      },
+    });
+
+    if (!userDetail) {
+      return res.status(404).json({
+        status: true,
+        message: "Bad Request!",
+        err: "Kamu bukan pembeli",
+        data: null,
+      });
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+    return res.status(404).json({
+      status: true,
+      message: "Bad Request",
+      err: err.message,
+      data: null,
+    });
+  }
+};
+
+const checkAdminPenjual = async (req, res, next) => {
+  try {
+    const { user } = req;
+
+    const userDetail = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+        OR: [{ role: "ADMIN" }, { role: "PENJUAL" }],
+      },
+    });
+
+    if (!userDetail) {
+      return res.status(404).json({
+        status: true,
+        message: "Bad Request",
+        err: "Kamu bukan admin ataupun penjual",
+        data: null,
+      });
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+    return res.status(404).json({
+      status: true,
+      message: "Bad Request",
+      err: err.message,
+      data: null,
+    });
+  }
+};
+
 const getAll = async (req, res, next) => {
   try {
     const getAll = await prisma.user.findMany({
@@ -214,9 +278,13 @@ const getAll = async (req, res, next) => {
           role: "ADMIN",
         },
       },
+      select: {
+        id: true,
+        nama: true,
+        alamat: true,
+        role: true,
+      },
     });
-
-    delete getAll.password;
 
     return res.status(200).json({
       success: true,
@@ -239,6 +307,8 @@ module.exports = {
   register,
   login,
   authenticate,
-  checkAdmin,
   getAll,
+  checkAdmin,
+  checkAdminPenjual,
+  checkPembeli,
 };
