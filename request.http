@@ -1,0 +1,27 @@
+###
+GET http://localhost:3000/
+
+###
+POST http://localhost:3000/api/v1/user/register
+Content-Type: application/json
+    
+{ 
+    "nama":"Purno",
+    "email": "sdfaf@mail.com",
+    "password":"Purno123",
+    "alamat":"Purno123",
+    "role": "ADMIN"
+} 
+
+###
+POST http://localhost:3000/api/v1/user/login
+Content-Type: application/json
+    
+{ 
+    "email": "sdfaf@mail.com",
+    "password":"Purno123"
+} 
+
+### 
+GET http://localhost:3000/api/v1/user/whoami
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJzZGZhZkBtYWlsLmNvbSIsImlhdCI6MTcwNTMwNTAxNCwiZXhwIjoxNzA1MzkxNDE0fQ.uo_gw1GUCSsPXA3We5PfRbwz2cfRNAnC5myCZD7EO_w
