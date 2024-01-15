@@ -1,5 +1,5 @@
 const prisma = require("../libs/prisma");
-const { produkValidationSchema } = require("../validations/produk.validation");
+const { produkValidationSchema, produkUpdateValidationSchema } = require("../validations/produk.validation");
 const imagekit = require("../libs/imagekit");
 const path = require("path");
 
@@ -39,8 +39,6 @@ const createProduk = async (req, res, next) => {
             fileName: Date.now() + path.extname(file.originalname),
             file: strFile,
           });
-
-          console.log(url, fileId, "adfas");
 
           const gambar = await prisma.media.create({
             data: {
@@ -84,126 +82,203 @@ const createProduk = async (req, res, next) => {
 };
 
 const getAll = async (req, res, next) => {
-    try {
-      const warung = await prisma.produk.findMany({
-        // select: {
-        //   id: true,
-        //   nama: true,
-        //   harga: true,
-        //   deskripsi: true,
-        //   kuantiti: true,
-        //   stok: true,
-        //   user: {
-        //     select: {
-        //       id: true,
-        //       fullname: true,
-        //       no_wa: true,
-        //     },
-        //   },
-        //   pengujian: {
-        //     select: {
-        //       id: true,
-        //       hasil: true,
-        //     },
-        //   },
-        //   Media: {
-        //     select: {
-        //       id: true,
-        //       link: true,
-        //     },
-        //   },
-        //   created: true,
-        //   updated: true,
-        // },
-        include: {
-            media: true,
-        },
-        orderBy: {
-          created: "desc",
-        },
-      });
-  
-      return res.status(200).json({
+  try {
+    const produk = await prisma.produk.findMany({
+      include: {
+        media: true,
+      },
+      orderBy: {
+        created: "desc",
+      },
+    });
+
+    return res.status(200).json({
+      status: false,
+      message: "OK!",
+      err: null,
+      data: produk,
+    });
+  } catch (err) {
+    next(err);
+    return res.status(400).json({
+      status: false,
+      message: "Bad Request",
+      err: err.message,
+      data: null,
+    });
+  }
+};
+
+const getById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const produkById = await prisma.produk.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        media: true,
+      },
+    });
+
+    if (!produkById) {
+      return res.status(400).json({
         status: false,
-        message: "OK!",
-        err: null,
-        data: warung,
+        message: "Bad Request!",
+        err: "Produk tidak ditemukan",
+        data: null,
       });
-    } catch (err) {
-      next(err);
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Produk retrieved successfully",
+      err: null,
+      data: produkById,
+    });
+  } catch (err) {
+    next(err);
+    return res.status(400).json({
+      status: false,
+      message: "Bad Request",
+      err: err.message,
+      data: null,
+    });
+  }
+};
+
+const updateProduk = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { value, error } = produkUpdateValidationSchema.validate(req.body);
+
+    if (error) {
       return res.status(400).json({
         status: false,
         message: "Bad Request",
+        err: error.message,
+        data: null,
+      });
+    }
+
+    const { nama, deskripsi, harga, satuan, stok, kategori } = value;
+
+    const checkProduk = await prisma.produk.findUnique({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!checkProduk) {
+      return res.status(404).json({
+        status: false,
+        message: "Bad Request",
+        err: "Produk tidak ditemukan",
+        data: null,
+      });
+    }
+
+    const updateProduk = await prisma.produk.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        nama,
+        deskripsi,
+        harga: harga ? Number(harga) : checkProduk.harga,
+        satuan,
+        stok: stok ? Number(stok) : checkProduk.stok,
+        kategori,
+      },
+    });
+
+    return res.status(201).json({
+      status: true,
+      message: "Produk berhasil dibuat",
+      err: null,
+      data: updateProduk,
+    });
+  } catch (err) {
+    next(err);
+    return res.status(400).json({
+      status: false,
+      message: "Bad Request",
+      err: err.message,
+      data: null,
+    });
+  }
+};
+
+const deleteProduk = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const produk = await prisma.produk.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!produk) {
+      return res.status(400).json({
+        status: false,
+        message: "Bad Request!",
         err: err.message,
         data: null,
       });
     }
-  };
-  
-  const getById = async (req, res, next) => {
-    try {
-      const { id } = req.params;
-      const warungById = await prisma.warung.findUnique({
-        where: { id: parseInt(id) },
-        select: {
-          id: true,
-          nama: true,
-          harga: true,
-          deskripsi: true,
-          kuantiti: true,
-          stok: true,
-          user: {
-            select: {
-              id: true,
-              fullname: true,
-              no_wa: true,
-            },
-          },
-          pengujian: {
-              select: {
-                  id: true,
-                  hasil: true,
-              },
-          },
-          Media: {
-            select: {
-              id: true,
-              link: true,
-            },
-          },
-          created: true,
-          updated: true,
-        },
-      });
-  
-      if (!warungById) {
-        return res.status(400).json({
-          status: false,
-          message: "Bad Request!",
-          err: "Warung tidak ditemukan",
-          data: null,
+
+    const media = await prisma.media.findMany({
+      where: {
+        id_produk: Number(id),
+      },
+    });
+
+    // delete gambar di imagekit
+    const deleteGambar = async (gambar) => {
+      try {
+        const gambarPromises = gambar.map(async (g) => {
+          if (g.id_link !== "-") {
+            await imagekit.deleteFile(g.id_link);
+          }
         });
+
+        return Promise.all(gambarPromises);
+      } catch (err) {
+        throw err;
       }
-  
-      return res.status(200).json({
-        status: true,
-        message: "Warung retrieved successfully",
-        err: null,
-        data: warungById,
-      });
-    } catch (err) {
-      next(err);
-      return res.status(400).json({
-        status: false,
-        message: "Bad Request",
-        err: err.message,
-        data: null,
-      });
-    }
-  };
+    };
+
+    await deleteGambar(media);
+    await prisma.media.deleteMany({
+      where: {
+        id_artikel: Number(id),
+      },
+    });
+
+    await prisma.produk.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    return res.status(200).json({
+      status: true,
+      message: "Produk deleted successfully",
+      err: null,
+      data: null,
+    });
+  } catch (err) {
+    next(err);
+    return res.status(400).json({
+      status: false,
+      message: "Bad Request",
+      err: err.message,
+      data: null,
+    });
+  }
+};
 
 module.exports = {
   createProduk,
   getAll,
-  getById
+  getById,
+  updateProduk,
+  deleteProduk,
 };

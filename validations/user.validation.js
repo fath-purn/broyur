@@ -5,7 +5,7 @@ const registerValidationSchema = Joi.object({
   nama: Joi.string().required(),
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
-  alamat: Joi.string().required(),
+  alamat: Joi.string(),
   role: Joi.string().valid("ADMIN", "PENJUAL", "PEMBELI").default("pembeli"),
 });
 

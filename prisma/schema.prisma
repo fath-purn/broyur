@@ -17,7 +17,7 @@ model User {
   nama     String
   email    String   @unique
   password String
-  alamat   String
+  alamat   String?
   role     Role
   media    Media[]
   transaksi Transaksi[]
