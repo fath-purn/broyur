@@ -345,8 +345,8 @@ const getAll = async (req, res, next) => {
       const { search } = req.query;
       getUsers = await prisma.user.findMany({
         where: {
-          NOT: {
-            role: "ADMIN",
+          AND: {
+            role: "PENJUAL",
           },
           OR: [
             {
@@ -375,11 +375,9 @@ const getAll = async (req, res, next) => {
       const { alamat } = req.query;
       getUsers = await prisma.user.findMany({
         where: {
-          NOT: {
-            role: "ADMIN",
-          },
           AND: {
             alamat: alamat.toUpperCase(),
+            role: "PENJUAL",
           },
         },
         select: {
@@ -393,8 +391,8 @@ const getAll = async (req, res, next) => {
     } else {
       getUsers = await prisma.user.findMany({
         where: {
-          NOT: {
-            role: "ADMIN",
+          AND: {
+            role: "PENJUAL",
           },
         },
         select: {
