@@ -189,7 +189,7 @@ const authenticate = async (req, res, next) => {
       },
       include: {
         media: true,
-      }
+      },
     });
 
     delete userDetail.password;
@@ -341,7 +341,7 @@ const getAll = async (req, res, next) => {
       });
     }
 
-    if (req.query.search ) {
+    if (req.query.search) {
       const { search } = req.query;
       getUsers = await prisma.user.findMany({
         where: {
@@ -368,10 +368,11 @@ const getAll = async (req, res, next) => {
           nama: true,
           alamat: true,
           role: true,
+          media: true,
         },
       });
     } else if (req.query.alamat) {
-      const {alamat} = req.query;
+      const { alamat } = req.query;
       getUsers = await prisma.user.findMany({
         where: {
           NOT: {
@@ -379,18 +380,17 @@ const getAll = async (req, res, next) => {
           },
           AND: {
             alamat: alamat.toUpperCase(),
-          }
+          },
         },
         select: {
           id: true,
           nama: true,
           alamat: true,
           role: true,
+          media: true,
         },
       });
-    } 
-    
-    else {
+    } else {
       getUsers = await prisma.user.findMany({
         where: {
           NOT: {
@@ -402,6 +402,7 @@ const getAll = async (req, res, next) => {
           nama: true,
           alamat: true,
           role: true,
+          media: true,
         },
       });
     }

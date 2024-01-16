@@ -5,7 +5,7 @@ const {
 } = require("../validations/produk.validation");
 const imagekit = require("../libs/imagekit");
 const path = require("path");
-const Joi = require('joi');
+const Joi = require("joi");
 
 const createProduk = async (req, res, next) => {
   try {
@@ -68,7 +68,7 @@ const createProduk = async (req, res, next) => {
       }
     };
 
-    if(req.file) {
+    if (req.file) {
       await uploadFiles(req.files, createProduk.id);
     }
 
@@ -94,23 +94,36 @@ const getAll = async (req, res, next) => {
     let produk = null;
 
     const queryValidationSchema = Joi.object({
-      search: Joi.string().allow(''),
-      alamat: Joi.string().valid('TELUK', 'BERKOH', 'TANJUNG', 'KARANGKLESEM', 'PURWOKERTO_KIDUL', 'KARANGPUCUNG').allow(''),
-      kategori: Joi.string().valid('SAYUR', 'DAGING_DAN_IKAN', 'BUAH', 'TELUR_TAHU_TEMPE').allow(''),
+      search: Joi.string().allow(""),
+      alamat: Joi.string()
+        .valid(
+          "TELUK",
+          "BERKOH",
+          "TANJUNG",
+          "KARANGKLESEM",
+          "PURWOKERTO_KIDUL",
+          "KARANGPUCUNG"
+        )
+        .allow(""),
+      kategori: Joi.string()
+        .valid("SAYUR", "DAGING_DAN_IKAN", "BUAH", "TELUR_TAHU_TEMPE")
+        .allow(""),
     });
-    
+
     const convertedQuery = {
       search: req.query.search ? req.query.search.toUpperCase() : undefined,
       alamat: req.query.alamat ? req.query.alamat.toUpperCase() : undefined,
-      kategori: req.query.kategori ? req.query.kategori.toUpperCase() : undefined,
+      kategori: req.query.kategori
+        ? req.query.kategori.toUpperCase()
+        : undefined,
     };
-    
-    const { error } = queryValidationSchema.validate(convertedQuery);    
+
+    const { error } = queryValidationSchema.validate(convertedQuery);
 
     if (error) {
       return res.status(400).json({
         status: false,
-        message: 'Bad Request',
+        message: "Bad Request",
         err: error.message,
         data: null,
       });
@@ -135,7 +148,7 @@ const getAll = async (req, res, next) => {
               role: true,
               created: true,
               updated: true,
-            }
+            },
           },
         },
         orderBy: {
@@ -161,7 +174,7 @@ const getAll = async (req, res, next) => {
               role: true,
               created: true,
               updated: true,
-            }
+            },
           },
         },
         orderBy: {
@@ -184,7 +197,7 @@ const getAll = async (req, res, next) => {
               role: true,
               created: true,
               updated: true,
-            }
+            },
           },
         },
         orderBy: {
@@ -209,7 +222,7 @@ const getAll = async (req, res, next) => {
               role: true,
               created: true,
               updated: true,
-            }
+            },
           },
         },
         orderBy: {
@@ -228,7 +241,7 @@ const getAll = async (req, res, next) => {
               role: true,
               created: true,
               updated: true,
-            }
+            },
           },
         },
         orderBy: {
@@ -257,27 +270,40 @@ const getAll = async (req, res, next) => {
 const getAllPenjual = async (req, res, next) => {
   try {
     const { user } = req;
-    
+
     let produk = null;
 
     const queryValidationSchema = Joi.object({
-      search: Joi.string().allow(''),
-      alamat: Joi.string().valid('TELUK', 'BERKOH', 'TANJUNG', 'KARANGKLESEM', 'PURWOKERTO_KIDUL', 'KARANGPUCUNG').allow(''),
-      kategori: Joi.string().valid('SAYUR', 'DAGING_DAN_IKAN', 'BUAH', 'TELUR_TAHU_TEMPE').allow(''),
+      search: Joi.string().allow(""),
+      alamat: Joi.string()
+        .valid(
+          "TELUK",
+          "BERKOH",
+          "TANJUNG",
+          "KARANGKLESEM",
+          "PURWOKERTO_KIDUL",
+          "KARANGPUCUNG"
+        )
+        .allow(""),
+      kategori: Joi.string()
+        .valid("SAYUR", "DAGING_DAN_IKAN", "BUAH", "TELUR_TAHU_TEMPE")
+        .allow(""),
     });
-    
+
     const convertedQuery = {
       search: req.query.search ? req.query.search.toUpperCase() : undefined,
       alamat: req.query.alamat ? req.query.alamat.toUpperCase() : undefined,
-      kategori: req.query.kategori ? req.query.kategori.toUpperCase() : undefined,
+      kategori: req.query.kategori
+        ? req.query.kategori.toUpperCase()
+        : undefined,
     };
-    
-    const { error } = queryValidationSchema.validate(convertedQuery);    
+
+    const { error } = queryValidationSchema.validate(convertedQuery);
 
     if (error) {
       return res.status(400).json({
         status: false,
-        message: 'Bad Request',
+        message: "Bad Request",
         err: error.message,
         data: null,
       });
@@ -303,7 +329,7 @@ const getAllPenjual = async (req, res, next) => {
               role: true,
               created: true,
               updated: true,
-            }
+            },
           },
         },
         orderBy: {
@@ -330,7 +356,7 @@ const getAllPenjual = async (req, res, next) => {
               role: true,
               created: true,
               updated: true,
-            }
+            },
           },
         },
         orderBy: {
@@ -354,7 +380,7 @@ const getAllPenjual = async (req, res, next) => {
               role: true,
               created: true,
               updated: true,
-            }
+            },
           },
         },
         orderBy: {
@@ -380,7 +406,7 @@ const getAllPenjual = async (req, res, next) => {
               role: true,
               created: true,
               updated: true,
-            }
+            },
           },
         },
         orderBy: {
@@ -400,7 +426,7 @@ const getAllPenjual = async (req, res, next) => {
               role: true,
               created: true,
               updated: true,
-            }
+            },
           },
         },
         orderBy: {
@@ -434,23 +460,36 @@ const getAllPembeli = async (req, res, next) => {
     let produk = null;
 
     const queryValidationSchema = Joi.object({
-      search: Joi.string().allow(''),
-      alamat: Joi.string().valid('TELUK', 'BERKOH', 'TANJUNG', 'KARANGKLESEM', 'PURWOKERTO_KIDUL', 'KARANGPUCUNG').allow(''),
-      kategori: Joi.string().valid('SAYUR', 'DAGING_DAN_IKAN', 'BUAH', 'TELUR_TAHU_TEMPE').allow(''),
+      search: Joi.string().allow(""),
+      alamat: Joi.string()
+        .valid(
+          "TELUK",
+          "BERKOH",
+          "TANJUNG",
+          "KARANGKLESEM",
+          "PURWOKERTO_KIDUL",
+          "KARANGPUCUNG"
+        )
+        .allow(""),
+      kategori: Joi.string()
+        .valid("SAYUR", "DAGING_DAN_IKAN", "BUAH", "TELUR_TAHU_TEMPE")
+        .allow(""),
     });
-    
+
     const convertedQuery = {
       search: req.query.search ? req.query.search.toUpperCase() : undefined,
       alamat: req.query.alamat ? req.query.alamat.toUpperCase() : undefined,
-      kategori: req.query.kategori ? req.query.kategori.toUpperCase() : undefined,
+      kategori: req.query.kategori
+        ? req.query.kategori.toUpperCase()
+        : undefined,
     };
-    
-    const { error } = queryValidationSchema.validate(convertedQuery);    
+
+    const { error } = queryValidationSchema.validate(convertedQuery);
 
     if (error) {
       return res.status(400).json({
         status: false,
-        message: 'Bad Request',
+        message: "Bad Request",
         err: error.message,
         data: null,
       });
@@ -462,7 +501,13 @@ const getAllPembeli = async (req, res, next) => {
         where: {
           id: Number(id),
         },
-        include: {
+        select: {
+          id: true,
+          nama: true,
+          email: true,
+          role: true,
+          created: true,
+          updated: true,
           media: true,
           produk: {
             include: {
@@ -473,8 +518,8 @@ const getAllPembeli = async (req, res, next) => {
                 contains: search,
                 mode: "insensitive",
               },
-            }
-          }
+            },
+          },
         },
         orderBy: {
           created: "desc",
@@ -487,7 +532,13 @@ const getAllPembeli = async (req, res, next) => {
           id: Number(id),
           alamat: alamat.toUpperCase(),
         },
-        include: {
+        select: {
+          id: true,
+          nama: true,
+          email: true,
+          role: true,
+          created: true,
+          updated: true,
           media: true,
           produk: {
             include: {
@@ -495,9 +546,10 @@ const getAllPembeli = async (req, res, next) => {
             },
             where: {
               kategori: kategori.toUpperCase(),
-            }
-          }
+            },
+          },
         },
+
         orderBy: {
           created: "desc",
         },
@@ -508,7 +560,13 @@ const getAllPembeli = async (req, res, next) => {
         where: {
           id: Number(id),
         },
-        include: {
+        select: {
+          id: true,
+          nama: true,
+          email: true,
+          role: true,
+          created: true,
+          updated: true,
           media: true,
           produk: {
             include: {
@@ -516,8 +574,8 @@ const getAllPembeli = async (req, res, next) => {
             },
             where: {
               kategori: kategori.toUpperCase(),
-            }
-          }
+            },
+          },
         },
         orderBy: {
           created: "desc",
@@ -535,8 +593,8 @@ const getAllPembeli = async (req, res, next) => {
           produk: {
             include: {
               media: true,
-            }
-          }
+            },
+          },
         },
         orderBy: {
           created: "desc",
@@ -544,14 +602,21 @@ const getAllPembeli = async (req, res, next) => {
       });
     } else {
       produk = await prisma.user.findMany({
-        where: { id: Number(id), },
-        include: {
+        where: { id: Number(id) },
+        select: {
+          id: true,
+          nama: true,
+          email: true,
+          role: true,
+          created: true,
+          updated: true,
+          media: true,
           media: true,
           produk: {
             include: {
               media: true,
-            }
-          }
+            },
+          },
         },
         orderBy: {
           created: "desc",
