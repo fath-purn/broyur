@@ -6,8 +6,9 @@ const {
   getAll,
 } = require("../controllers/user.controller");
 const verifyToken = require("../libs/verifyToken");
+const { upload } = require("../libs/multer");
 
-router.post("/register", register);
+router.post("/register", upload.single("image"), register);
 router.post("/login", login);
 router.get('/', getAll);
 router.get("/whoami", verifyToken, authenticate);

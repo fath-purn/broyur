@@ -6,6 +6,8 @@ const {
   registerValidationSchema,
   loginUserSchema,
 } = require("../validations/user.validation");
+const imagekit = require("../libs/imagekit");
+const path = require("path");
 
 // register
 const register = async (req, res, next) => {
@@ -48,6 +50,37 @@ const register = async (req, res, next) => {
     });
 
     delete users.password;
+
+    // fungsi uploadFiles untuk imagekit
+    const uploadFiles = async (file, id_user) => {
+      try {
+        let strFile = file.buffer.toString("base64");
+
+          let { url, fileId } = await imagekit.upload({
+            fileName: Date.now() + path.extname(file.originalname),
+            file: strFile,
+          });
+
+          const gambar = await prisma.media.create({
+            data: {
+              id_link: fileId,
+              link: url,
+              id_user: id_user,
+            },
+          });
+
+          return gambar;
+      } catch (err) {
+        return res.status(404).json({
+          status: false,
+          message: "Bad Request!",
+          err: err.message,
+          data: null,
+        });
+      }
+    };
+
+    await uploadFiles(req.file, users.id);
 
     return res.status(201).json({
       status: true,
