@@ -77,7 +77,7 @@ const createTransaksi = async (req, res, next) => {
 
       return res.status(201).json({
         status: true,
-        message: "Transaksi berhasil dibuat mang ea",
+        message: "Transaksi berhasil dibuat",
         err: null,
         data: updateTransaksi,
       });
@@ -157,7 +157,16 @@ const getAll = async (req, res, next) => {
     } else {
       transaksi = await prisma.transaksi.findMany({
         where: {
-          id_user: user.id,
+          OR: [
+            {
+              id_user: user.id,
+            },
+            {
+              produk: {
+                id_user: user.id,
+              },
+            },
+          ],
         },
         include: {
           produk: {
@@ -170,6 +179,7 @@ const getAll = async (req, res, next) => {
           created: "desc",
         },
       });
+      
     }
 
     return res.status(200).json({
