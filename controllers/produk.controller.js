@@ -426,6 +426,178 @@ const getAllPenjual = async (req, res, next) => {
   }
 };
 
+const getAllPembeli = async (req, res, next) => {
+  try {
+    const { user } = req;
+    
+    let produk = null;
+
+    const queryValidationSchema = Joi.object({
+      search: Joi.string().allow(''),
+      alamat: Joi.string().valid('TELUK', 'BERKOH', 'TANJUNG', 'KARANGKLESEM', 'PURWOKERTO_KIDUL', 'KARANGPUCUNG').allow(''),
+      kategori: Joi.string().valid('SAYUR', 'DAGING_DAN_IKAN', 'BUAH', 'TELUR_TAHU_TEMPE').allow(''),
+    });
+    
+    const convertedQuery = {
+      search: req.query.search ? req.query.search.toUpperCase() : undefined,
+      alamat: req.query.alamat ? req.query.alamat.toUpperCase() : undefined,
+      kategori: req.query.kategori ? req.query.kategori.toUpperCase() : undefined,
+    };
+    
+    const { error } = queryValidationSchema.validate(convertedQuery);    
+
+    if (error) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: error.message,
+        data: null,
+      });
+    }
+
+    if (req.query.search) {
+      const { search } = req.query;
+      produk = await prisma.produk.findMany({
+        where: {
+          id_user: user.id,
+          nama: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        include: {
+          media: true,
+          user: {
+            select: {
+              id: true,
+              nama: true,
+              email: true,
+              role: true,
+              created: true,
+              updated: true,
+            }
+          },
+        },
+        orderBy: {
+          created: "desc",
+        },
+      });
+    } else if (req.query.alamat && req.query.kategori) {
+      const { alamat, kategori } = req.query;
+      produk = await prisma.produk.findMany({
+        where: {
+          id_user: user.id,
+          kategori: kategori.toUpperCase(),
+          user: {
+            alamat: alamat.toUpperCase(),
+          },
+        },
+        include: {
+          media: true,
+          user: {
+            select: {
+              id: true,
+              nama: true,
+              email: true,
+              role: true,
+              created: true,
+              updated: true,
+            }
+          },
+        },
+        orderBy: {
+          created: "desc",
+        },
+      });
+    } else if (req.query.kategori) {
+      const { kategori } = req.query;
+      produk = await prisma.produk.findMany({
+        where: {
+          id_user: user.id,
+          kategori: kategori.toUpperCase(),
+        },
+        include: {
+          media: true,
+          user: {
+            select: {
+              id: true,
+              nama: true,
+              email: true,
+              role: true,
+              created: true,
+              updated: true,
+            }
+          },
+        },
+        orderBy: {
+          created: "desc",
+        },
+      });
+    } else if (req.query.alamat) {
+      const { alamat } = req.query;
+      produk = await prisma.produk.findMany({
+        where: {
+          id_user: user.id,
+          user: {
+            alamat: alamat.toUpperCase(),
+          },
+        },
+        include: {
+          media: true,
+          user: {
+            select: {
+              id: true,
+              nama: true,
+              email: true,
+              role: true,
+              created: true,
+              updated: true,
+            }
+          },
+        },
+        orderBy: {
+          created: "desc",
+        },
+      });
+    } else {
+      produk = await prisma.produk.findMany({
+        where: { id_user: user.id },
+        include: {
+          media: true,
+          user: {
+            select: {
+              id: true,
+              nama: true,
+              email: true,
+              role: true,
+              created: true,
+              updated: true,
+            }
+          },
+        },
+        orderBy: {
+          created: "desc",
+        },
+      });
+    }
+
+    return res.status(200).json({
+      status: false,
+      message: "OK!",
+      err: null,
+      data: produk,
+    });
+  } catch (err) {
+    next(err);
+    return res.status(400).json({
+      status: false,
+      message: "Bad Request",
+      err: err.message,
+      data: null,
+    });
+  }
+};
+
 const getById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -644,4 +816,5 @@ module.exports = {
   deleteProduk,
   getAllPenjual,
   getByIdPenjual,
+  getAllPembeli,
 };

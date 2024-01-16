@@ -8,6 +8,7 @@ const {
 } = require("../validations/user.validation");
 const imagekit = require("../libs/imagekit");
 const path = require("path");
+const Joi = require("joi");
 
 // register
 const register = async (req, res, next) => {
@@ -56,20 +57,20 @@ const register = async (req, res, next) => {
       try {
         let strFile = file.buffer.toString("base64");
 
-          let { url, fileId } = await imagekit.upload({
-            fileName: Date.now() + path.extname(file.originalname),
-            file: strFile,
-          });
+        let { url, fileId } = await imagekit.upload({
+          fileName: Date.now() + path.extname(file.originalname),
+          file: strFile,
+        });
 
-          const gambar = await prisma.media.create({
-            data: {
-              id_link: fileId,
-              link: url,
-              id_user: id_user,
-            },
-          });
+        const gambar = await prisma.media.create({
+          data: {
+            id_link: fileId,
+            link: url,
+            id_user: id_user,
+          },
+        });
 
-          return gambar;
+        return gambar;
       } catch (err) {
         return res.status(404).json({
           status: false,
@@ -80,7 +81,7 @@ const register = async (req, res, next) => {
       }
     };
 
-    if(req.file){
+    if (req.file) {
       await uploadFiles(req.file, users.id);
     }
 
@@ -305,25 +306,108 @@ const checkAdminPenjual = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const getAll = await prisma.user.findMany({
-      where: {
-        NOT: {
-          role: "ADMIN",
-        },
-      },
-      select: {
-        id: true,
-        nama: true,
-        alamat: true,
-        role: true,
-      },
+    let getUsers = null;
+
+    const queryValidationSchema = Joi.object({
+      search: Joi.string().allow(""),
+      alamat: Joi.string()
+        .valid(
+          "TELUK",
+          "BERKOH",
+          "TANJUNG",
+          "KARANGKLESEM",
+          "PURWOKERTO_KIDUL",
+          "KARANGPUCUNG"
+        )
+        .allow(""),
     });
+
+    const convertedQuery = {
+      search: req.query.search ? req.query.search.toUpperCase() : undefined,
+      alamat: req.query.alamat ? req.query.alamat.toUpperCase() : undefined,
+    };
+
+    const { error } = queryValidationSchema.validate(convertedQuery);
+
+    if (error) {
+      return res.status(400).json({
+        status: false,
+        message: "Bad Request",
+        err: error.message,
+        data: null,
+      });
+    }
+
+    if (req.query.search ) {
+      const { search } = req.query;
+      getUsers = await prisma.user.findMany({
+        where: {
+          NOT: {
+            role: "ADMIN",
+          },
+          OR: [
+            {
+              nama: {
+                contains: search || "",
+                mode: "insensitive",
+              },
+            },
+            {
+              alamat: {
+                contains: search || "",
+                mode: "insensitive",
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          nama: true,
+          alamat: true,
+          role: true,
+        },
+      });
+    } else if (req.query.alamat) {
+      const {alamat} = req.query;
+      getUsers = await prisma.user.findMany({
+        where: {
+          NOT: {
+            role: "ADMIN",
+          },
+          AND: {
+            alamat: alamat.toUpperCase(),
+          }
+        },
+        select: {
+          id: true,
+          nama: true,
+          alamat: true,
+          role: true,
+        },
+      });
+    } 
+    
+    else {
+      getUsers = await prisma.user.findMany({
+        where: {
+          NOT: {
+            role: "ADMIN",
+          },
+        },
+        select: {
+          id: true,
+          nama: true,
+          alamat: true,
+          role: true,
+        },
+      });
+    }
 
     return res.status(200).json({
       success: true,
       message: "OK!",
       err: null,
-      data: getAll,
+      data: getUsers,
     });
   } catch (err) {
     next(err);
