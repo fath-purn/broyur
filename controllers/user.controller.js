@@ -187,6 +187,9 @@ const authenticate = async (req, res, next) => {
       where: {
         id: user.id,
       },
+      include: {
+        media: true,
+      }
     });
 
     delete userDetail.password;

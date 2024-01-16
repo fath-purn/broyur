@@ -428,8 +428,10 @@ const getAllPenjual = async (req, res, next) => {
 
 const getAllPembeli = async (req, res, next) => {
   try {
+    console.log('adsf')
     const { user } = req;
-    
+    const { id } = req.params;
+
     let produk = null;
 
     const queryValidationSchema = Joi.object({
@@ -457,9 +459,9 @@ const getAllPembeli = async (req, res, next) => {
 
     if (req.query.search) {
       const { search } = req.query;
-      produk = await prisma.produk.findMany({
+      produk = await prisma.user.findMany({
         where: {
-          id_user: user.id,
+          id: Number(id),
           nama: {
             contains: search,
             mode: "insensitive",
@@ -467,16 +469,11 @@ const getAllPembeli = async (req, res, next) => {
         },
         include: {
           media: true,
-          user: {
-            select: {
-              id: true,
-              nama: true,
-              email: true,
-              role: true,
-              created: true,
-              updated: true,
+          produk: {
+            include: {
+              media: true,
             }
-          },
+          }
         },
         orderBy: {
           created: "desc",
@@ -484,26 +481,18 @@ const getAllPembeli = async (req, res, next) => {
       });
     } else if (req.query.alamat && req.query.kategori) {
       const { alamat, kategori } = req.query;
-      produk = await prisma.produk.findMany({
+      produk = await prisma.user.findMany({
         where: {
-          id_user: user.id,
+          id: Number(id),
           kategori: kategori.toUpperCase(),
-          user: {
-            alamat: alamat.toUpperCase(),
-          },
         },
         include: {
           media: true,
-          user: {
-            select: {
-              id: true,
-              nama: true,
-              email: true,
-              role: true,
-              created: true,
-              updated: true,
+          produk: {
+            include: {
+              media: true,
             }
-          },
+          }
         },
         orderBy: {
           created: "desc",
@@ -511,23 +500,18 @@ const getAllPembeli = async (req, res, next) => {
       });
     } else if (req.query.kategori) {
       const { kategori } = req.query;
-      produk = await prisma.produk.findMany({
+      produk = await prisma.user.findMany({
         where: {
-          id_user: user.id,
+          id: Number(id),
           kategori: kategori.toUpperCase(),
         },
         include: {
           media: true,
-          user: {
-            select: {
-              id: true,
-              nama: true,
-              email: true,
-              role: true,
-              created: true,
-              updated: true,
+          produk: {
+            include: {
+              media: true,
             }
-          },
+          }
         },
         orderBy: {
           created: "desc",
@@ -535,45 +519,32 @@ const getAllPembeli = async (req, res, next) => {
       });
     } else if (req.query.alamat) {
       const { alamat } = req.query;
-      produk = await prisma.produk.findMany({
+      produk = await prisma.user.findMany({
         where: {
-          id_user: user.id,
-          user: {
-            alamat: alamat.toUpperCase(),
-          },
+          id: Number(id),
         },
         include: {
           media: true,
-          user: {
-            select: {
-              id: true,
-              nama: true,
-              email: true,
-              role: true,
-              created: true,
-              updated: true,
+          produk: {
+            include: {
+              media: true,
             }
-          },
+          }
         },
         orderBy: {
           created: "desc",
         },
       });
     } else {
-      produk = await prisma.produk.findMany({
-        where: { id_user: user.id },
+      produk = await prisma.user.findMany({
+        where: { id: Number(id), },
         include: {
           media: true,
-          user: {
-            select: {
-              id: true,
-              nama: true,
-              email: true,
-              role: true,
-              created: true,
-              updated: true,
+          produk: {
+            include: {
+              media: true,
             }
-          },
+          }
         },
         orderBy: {
           created: "desc",

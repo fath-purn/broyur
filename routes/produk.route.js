@@ -25,7 +25,7 @@ router.post(
   createProduk
 );
 router.get("/", getAll);
-router.get("/pembeli", verifyToken, getAllPembeli);
+router.get("/pembeli/:id", getAllPembeli);
 router.get("/penjual", verifyToken, checkAdminPenjual, getAllPenjual);
 router.get("/penjual/:id", verifyToken, checkAdminPenjual, getByIdPenjual);
 router.get("/:id", getById);
