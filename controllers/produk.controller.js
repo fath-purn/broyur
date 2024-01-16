@@ -68,7 +68,9 @@ const createProduk = async (req, res, next) => {
       }
     };
 
-    await uploadFiles(req.files, createProduk.id);
+    if(req.file) {
+      await uploadFiles(req.files, createProduk.id);
+    }
 
     return res.status(201).json({
       status: true,

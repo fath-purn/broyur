@@ -80,7 +80,9 @@ const register = async (req, res, next) => {
       }
     };
 
-    await uploadFiles(req.file, users.id);
+    if(req.file){
+      await uploadFiles(req.file, users.id);
+    }
 
     return res.status(201).json({
       status: true,
