@@ -428,7 +428,6 @@ const getAllPenjual = async (req, res, next) => {
 
 const getAllPembeli = async (req, res, next) => {
   try {
-    console.log('adsf')
     const { user } = req;
     const { id } = req.params;
 
@@ -462,16 +461,18 @@ const getAllPembeli = async (req, res, next) => {
       produk = await prisma.user.findMany({
         where: {
           id: Number(id),
-          nama: {
-            contains: search,
-            mode: "insensitive",
-          },
         },
         include: {
           media: true,
           produk: {
             include: {
               media: true,
+            },
+            where: {
+              nama: {
+                contains: search,
+                mode: "insensitive",
+              },
             }
           }
         },
@@ -484,13 +485,16 @@ const getAllPembeli = async (req, res, next) => {
       produk = await prisma.user.findMany({
         where: {
           id: Number(id),
-          kategori: kategori.toUpperCase(),
+          alamat: alamat.toUpperCase(),
         },
         include: {
           media: true,
           produk: {
             include: {
               media: true,
+            },
+            where: {
+              kategori: kategori.toUpperCase(),
             }
           }
         },
@@ -503,13 +507,15 @@ const getAllPembeli = async (req, res, next) => {
       produk = await prisma.user.findMany({
         where: {
           id: Number(id),
-          kategori: kategori.toUpperCase(),
         },
         include: {
           media: true,
           produk: {
             include: {
               media: true,
+            },
+            where: {
+              kategori: kategori.toUpperCase(),
             }
           }
         },
@@ -522,6 +528,7 @@ const getAllPembeli = async (req, res, next) => {
       produk = await prisma.user.findMany({
         where: {
           id: Number(id),
+          alamat: alamat.toUpperCase(),
         },
         include: {
           media: true,
