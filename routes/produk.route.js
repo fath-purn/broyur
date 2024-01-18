@@ -8,6 +8,7 @@ const {
   getAllPenjual,
   getByIdPenjual,
   getAllPembeli,
+  getMyProduct,
 } = require("../controllers/produk.controller");
 const {
   checkAdminPenjual,
@@ -25,6 +26,7 @@ router.post(
   createProduk
 );
 router.get("/", getAll);
+router.get("/me", verifyToken,checkAdminPenjual, getMyProduct);
 router.get("/pembeli/:id", getAllPembeli);
 router.get("/penjual", verifyToken, checkAdminPenjual, getAllPenjual);
 router.get("/penjual/:id", verifyToken, checkAdminPenjual, getByIdPenjual);

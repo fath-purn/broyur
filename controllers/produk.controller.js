@@ -1,11 +1,8 @@
-const prisma = require("../libs/prisma");
-const {
-  produkValidationSchema,
-  produkUpdateValidationSchema,
-} = require("../validations/produk.validation");
-const imagekit = require("../libs/imagekit");
-const path = require("path");
-const Joi = require("joi");
+const prisma = require('../libs/prisma');
+const { produkValidationSchema, produkUpdateValidationSchema } = require('../validations/produk.validation');
+const imagekit = require('../libs/imagekit');
+const path = require('path');
+const Joi = require('joi');
 
 const createProduk = async (req, res, next) => {
   try {
@@ -15,7 +12,7 @@ const createProduk = async (req, res, next) => {
     if (error) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
+        message: 'Bad Request',
         err: error.message,
         data: null,
       });
@@ -39,7 +36,7 @@ const createProduk = async (req, res, next) => {
     const uploadFiles = async (files, id_produk) => {
       try {
         const gambarPromises = files.map(async (file) => {
-          let strFile = file.buffer.toString("base64");
+          let strFile = file.buffer.toString('base64');
 
           let { url, fileId } = await imagekit.upload({
             fileName: Date.now() + path.extname(file.originalname),
@@ -61,7 +58,7 @@ const createProduk = async (req, res, next) => {
       } catch (err) {
         return res.status(404).json({
           status: false,
-          message: "Bad Request!",
+          message: 'Bad Request!',
           err: err.message,
           data: null,
         });
@@ -74,7 +71,7 @@ const createProduk = async (req, res, next) => {
 
     return res.status(201).json({
       status: true,
-      message: "Produk berhasil dibuat",
+      message: 'Produk berhasil dibuat',
       err: null,
       data: createProduk,
     });
@@ -82,7 +79,7 @@ const createProduk = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -94,28 +91,15 @@ const getAll = async (req, res, next) => {
     let produk = null;
 
     const queryValidationSchema = Joi.object({
-      search: Joi.string().allow(""),
-      alamat: Joi.string()
-        .valid(
-          "TELUK",
-          "BERKOH",
-          "TANJUNG",
-          "KARANGKLESEM",
-          "PURWOKERTO_KIDUL",
-          "KARANGPUCUNG"
-        )
-        .allow(""),
-      kategori: Joi.string()
-        .valid("SAYUR", "DAGING_DAN_IKAN", "BUAH", "TELUR_TAHU_TEMPE")
-        .allow(""),
+      search: Joi.string().allow(''),
+      alamat: Joi.string().valid('TELUK', 'BERKOH', 'TANJUNG', 'KARANGKLESEM', 'PURWOKERTO_KIDUL', 'KARANGPUCUNG').allow(''),
+      kategori: Joi.string().valid('SAYUR', 'DAGING_DAN_IKAN', 'BUAH', 'TELUR_TAHU_TEMPE').allow(''),
     });
 
     const convertedQuery = {
       search: req.query.search ? req.query.search.toUpperCase() : undefined,
       alamat: req.query.alamat ? req.query.alamat.toUpperCase() : undefined,
-      kategori: req.query.kategori
-        ? req.query.kategori.toUpperCase()
-        : undefined,
+      kategori: req.query.kategori ? req.query.kategori.toUpperCase() : undefined,
     };
 
     const { error } = queryValidationSchema.validate(convertedQuery);
@@ -123,7 +107,7 @@ const getAll = async (req, res, next) => {
     if (error) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
+        message: 'Bad Request',
         err: error.message,
         data: null,
       });
@@ -135,7 +119,7 @@ const getAll = async (req, res, next) => {
         where: {
           nama: {
             contains: search,
-            mode: "insensitive",
+            mode: 'insensitive',
           },
         },
         include: {
@@ -152,7 +136,7 @@ const getAll = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else if (req.query.alamat && req.query.kategori) {
@@ -178,7 +162,7 @@ const getAll = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else if (req.query.kategori) {
@@ -201,7 +185,7 @@ const getAll = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else if (req.query.alamat) {
@@ -226,7 +210,7 @@ const getAll = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else {
@@ -245,14 +229,14 @@ const getAll = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     }
 
     return res.status(200).json({
       status: false,
-      message: "OK!",
+      message: 'OK!',
       err: null,
       data: produk,
     });
@@ -260,7 +244,7 @@ const getAll = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -274,28 +258,15 @@ const getAllPenjual = async (req, res, next) => {
     let produk = null;
 
     const queryValidationSchema = Joi.object({
-      search: Joi.string().allow(""),
-      alamat: Joi.string()
-        .valid(
-          "TELUK",
-          "BERKOH",
-          "TANJUNG",
-          "KARANGKLESEM",
-          "PURWOKERTO_KIDUL",
-          "KARANGPUCUNG"
-        )
-        .allow(""),
-      kategori: Joi.string()
-        .valid("SAYUR", "DAGING_DAN_IKAN", "BUAH", "TELUR_TAHU_TEMPE")
-        .allow(""),
+      search: Joi.string().allow(''),
+      alamat: Joi.string().valid('TELUK', 'BERKOH', 'TANJUNG', 'KARANGKLESEM', 'PURWOKERTO_KIDUL', 'KARANGPUCUNG').allow(''),
+      kategori: Joi.string().valid('SAYUR', 'DAGING_DAN_IKAN', 'BUAH', 'TELUR_TAHU_TEMPE').allow(''),
     });
 
     const convertedQuery = {
       search: req.query.search ? req.query.search.toUpperCase() : undefined,
       alamat: req.query.alamat ? req.query.alamat.toUpperCase() : undefined,
-      kategori: req.query.kategori
-        ? req.query.kategori.toUpperCase()
-        : undefined,
+      kategori: req.query.kategori ? req.query.kategori.toUpperCase() : undefined,
     };
 
     const { error } = queryValidationSchema.validate(convertedQuery);
@@ -303,7 +274,7 @@ const getAllPenjual = async (req, res, next) => {
     if (error) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
+        message: 'Bad Request',
         err: error.message,
         data: null,
       });
@@ -316,7 +287,7 @@ const getAllPenjual = async (req, res, next) => {
           id_user: user.id,
           nama: {
             contains: search,
-            mode: "insensitive",
+            mode: 'insensitive',
           },
         },
         include: {
@@ -333,7 +304,7 @@ const getAllPenjual = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else if (req.query.alamat && req.query.kategori) {
@@ -360,7 +331,7 @@ const getAllPenjual = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else if (req.query.kategori) {
@@ -384,7 +355,7 @@ const getAllPenjual = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else if (req.query.alamat) {
@@ -410,7 +381,7 @@ const getAllPenjual = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else {
@@ -430,14 +401,14 @@ const getAllPenjual = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     }
 
     return res.status(200).json({
       status: false,
-      message: "OK!",
+      message: 'OK!',
       err: null,
       data: produk,
     });
@@ -445,7 +416,7 @@ const getAllPenjual = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -460,28 +431,15 @@ const getAllPembeli = async (req, res, next) => {
     let produk = null;
 
     const queryValidationSchema = Joi.object({
-      search: Joi.string().allow(""),
-      alamat: Joi.string()
-        .valid(
-          "TELUK",
-          "BERKOH",
-          "TANJUNG",
-          "KARANGKLESEM",
-          "PURWOKERTO_KIDUL",
-          "KARANGPUCUNG"
-        )
-        .allow(""),
-      kategori: Joi.string()
-        .valid("SAYUR", "DAGING_DAN_IKAN", "BUAH", "TELUR_TAHU_TEMPE")
-        .allow(""),
+      search: Joi.string().allow(''),
+      alamat: Joi.string().valid('TELUK', 'BERKOH', 'TANJUNG', 'KARANGKLESEM', 'PURWOKERTO_KIDUL', 'KARANGPUCUNG').allow(''),
+      kategori: Joi.string().valid('SAYUR', 'DAGING_DAN_IKAN', 'BUAH', 'TELUR_TAHU_TEMPE').allow(''),
     });
 
     const convertedQuery = {
       search: req.query.search ? req.query.search.toUpperCase() : undefined,
       alamat: req.query.alamat ? req.query.alamat.toUpperCase() : undefined,
-      kategori: req.query.kategori
-        ? req.query.kategori.toUpperCase()
-        : undefined,
+      kategori: req.query.kategori ? req.query.kategori.toUpperCase() : undefined,
     };
 
     const { error } = queryValidationSchema.validate(convertedQuery);
@@ -489,7 +447,7 @@ const getAllPembeli = async (req, res, next) => {
     if (error) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
+        message: 'Bad Request',
         err: error.message,
         data: null,
       });
@@ -516,13 +474,13 @@ const getAllPembeli = async (req, res, next) => {
             where: {
               nama: {
                 contains: search,
-                mode: "insensitive",
+                mode: 'insensitive',
               },
             },
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else if (req.query.alamat && req.query.kategori) {
@@ -551,7 +509,7 @@ const getAllPembeli = async (req, res, next) => {
         },
 
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else if (req.query.kategori) {
@@ -578,7 +536,7 @@ const getAllPembeli = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else if (req.query.alamat) {
@@ -597,7 +555,7 @@ const getAllPembeli = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     } else {
@@ -619,14 +577,14 @@ const getAllPembeli = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
     }
 
     return res.status(200).json({
       status: false,
-      message: "OK!",
+      message: 'OK!',
       err: null,
       data: produk,
     });
@@ -634,7 +592,7 @@ const getAllPembeli = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -654,15 +612,15 @@ const getById = async (req, res, next) => {
     if (!produkById) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request!",
-        err: "Produk tidak ditemukan",
+        message: 'Bad Request!',
+        err: 'Produk tidak ditemukan',
         data: null,
       });
     }
 
     return res.status(200).json({
       status: true,
-      message: "Produk retrieved successfully",
+      message: 'Produk retrieved successfully',
       err: null,
       data: produkById,
     });
@@ -670,7 +628,7 @@ const getById = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -691,15 +649,15 @@ const getByIdPenjual = async (req, res, next) => {
     if (!produkById) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request!",
-        err: "Produk tidak ditemukan",
+        message: 'Bad Request!',
+        err: 'Produk tidak ditemukan',
         data: null,
       });
     }
 
     return res.status(200).json({
       status: true,
-      message: "Produk retrieved successfully",
+      message: 'Produk retrieved successfully',
       err: null,
       data: produkById,
     });
@@ -707,7 +665,7 @@ const getByIdPenjual = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -723,7 +681,7 @@ const updateProduk = async (req, res, next) => {
     if (error) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
+        message: 'Bad Request',
         err: error.message,
         data: null,
       });
@@ -741,8 +699,8 @@ const updateProduk = async (req, res, next) => {
     if (!checkProduk) {
       return res.status(404).json({
         status: false,
-        message: "Bad Request",
-        err: "Produk tidak ditemukan",
+        message: 'Bad Request',
+        err: 'Produk tidak ditemukan',
         data: null,
       });
     }
@@ -764,7 +722,7 @@ const updateProduk = async (req, res, next) => {
 
     return res.status(201).json({
       status: true,
-      message: "Produk berhasil dibuat",
+      message: 'Produk berhasil dibuat',
       err: null,
       data: updateProduk,
     });
@@ -772,7 +730,7 @@ const updateProduk = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -794,8 +752,8 @@ const deleteProduk = async (req, res, next) => {
     if (!produk) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request!",
-        err: "Produk tidak ditemukan",
+        message: 'Bad Request!',
+        err: 'Produk tidak ditemukan',
         data: null,
       });
     }
@@ -810,7 +768,7 @@ const deleteProduk = async (req, res, next) => {
     const deleteGambar = async (gambar) => {
       try {
         const gambarPromises = gambar.map(async (g) => {
-          if (g.id_link !== "-") {
+          if (g.id_link !== '-') {
             await imagekit.deleteFile(g.id_link);
           }
         });
@@ -836,7 +794,7 @@ const deleteProduk = async (req, res, next) => {
 
     return res.status(200).json({
       status: true,
-      message: "Produk deleted successfully",
+      message: 'Produk deleted successfully',
       err: null,
       data: null,
     });
@@ -844,10 +802,42 @@ const deleteProduk = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
+  }
+};
+
+const getMyProduct = async (req, res, next) => {
+  try {
+    const { user } = req;
+    let produk = await prisma.produk.findMany({
+      where: {
+        id_user: user.id,
+      },
+      include: {
+        media: true,
+      },
+    });
+
+    produk = produk.map((p) => {
+      return {
+        id: p.id,
+        nama: p.nama,
+        harga: p.harga,
+        stok: p.stok,
+      };
+    });
+
+    return res.status(200).json({
+      status: true,
+      message: 'OK!',
+      err: null,
+      data: produk,
+    });
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -860,4 +850,5 @@ module.exports = {
   getAllPenjual,
   getByIdPenjual,
   getAllPembeli,
+  getMyProduct,
 };

@@ -1,8 +1,5 @@
-const prisma = require("../libs/prisma");
-const {
-  transaksiValidationSchema,
-  transaksiUpdateValidationSchema,
-} = require("../validations/transaksi.validation");
+const prisma = require('../libs/prisma');
+const { transaksiValidationSchema, transaksiUpdateValidationSchema, validateTransactionValidationSchema } = require('../validations/transaksi.validation');
 const Joi = require('joi');
 
 const createTransaksi = async (req, res, next) => {
@@ -13,99 +10,99 @@ const createTransaksi = async (req, res, next) => {
     if (error) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
+        message: 'Bad Request',
         err: error.message,
         data: null,
       });
     }
 
-    const { id_produk, jumlah, alamat, pembayaran, status } = value;
-
-    const checkProduk = await prisma.produk.findUnique({
+    const isExistProducts = await prisma.produk.findMany({
       where: {
-        id: Number(id_produk),
+        id: {
+          in: value.map((item) => item.id_produk),
+        },
       },
     });
 
-    if (!checkProduk) {
+    if (isExistProducts.length !== value.length) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
-        err: "Produk tidak ditemukan",
+        message: 'Bad Request',
+        err: 'Produk tidak ditemukan',
         data: null,
       });
     }
 
-    if (checkProduk.stok < jumlah) {
+    // check stok
+    const checkStok = await Promise.all(
+      value.map(async (item) => {
+        const checkProduk = await prisma.produk.findUnique({
+          where: {
+            id: Number(item.id_produk),
+          },
+        });
+
+        if (checkProduk.stok < item.jumlah) {
+          return false;
+        }
+
+        return true;
+      })
+    );
+
+    if (checkStok.includes(false)) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
-        err: "Stok tidak cukup",
+        message: 'Bad Request',
+        err: 'Stok tidak cukup',
         data: null,
       });
     }
 
-    let stokBaru = checkProduk.stok - jumlah;
+    // descrese stok
+    await Promise.all(
+      value.map(async (item) => {
+        const checkProduk = await prisma.produk.findUnique({
+          where: {
+            id: Number(item.id_produk),
+          },
+        });
 
-    await prisma.produk.update({
-      where: {
-        id: Number(id_produk),
-      },
-      data: {
-        stok: stokBaru,
-      },
-    });
+        const stokBaru = checkProduk.stok - item.jumlah;
 
-    let harga = checkProduk.harga * Number(jumlah);
+        await prisma.produk.update({
+          where: {
+            id: Number(item.id_produk),
+          },
+          data: {
+            stok: stokBaru,
+          },
+        });
+      })
+    );
 
-    const checkTransaksi = await prisma.transaksi.findFirst({
-      where: {
-        id_produk: id_produk,
-        id_user: user.id,
-      },
-    });
-
-    if (checkTransaksi) {
-      const updateTransaksi = await prisma.transaksi.update({
-        where: {
-          id: checkTransaksi.id,
-        },
-        data: {
-          jumlah: checkTransaksi.jumlah + jumlah,
-        },
-      });
-
-      return res.status(201).json({
-        status: true,
-        message: "Transaksi berhasil dibuat",
-        err: null,
-        data: updateTransaksi,
-      });
-    }
-
-    const createTransaksi = await prisma.transaksi.create({
-      data: {
+    const transactions = await prisma.transaksi.createMany({
+      data: value.map((item) => ({
         id_user: Number(user.id),
-        id_produk: Number(id_produk),
-        jumlah,
-        harga: harga,
-        alamat,
-        pembayaran,
-        status,
-      },
+        id_produk: Number(item.id_produk),
+        harga: isExistProducts.find((val) => val.id === item.id_produk).harga * Number(item.jumlah),
+        jumlah: item.jumlah,
+        alamat: item.alamat,
+        pembayaran: item.pembayaran,
+      })),
     });
 
     return res.status(201).json({
       status: true,
-      message: "Transaksi berhasil dibuat",
+      message: 'Transaksi berhasil dibuat',
       err: null,
-      data: createTransaksi,
+      data: transactions,
     });
   } catch (err) {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -120,13 +117,13 @@ const getAll = async (req, res, next) => {
     const statusValidationSchema = Joi.object({
       status: Joi.string().valid('SELESAI', 'MENUNGGU', 'DITOLAK', 'DIPROSES', 'DIKONFIRMASI').allow(''),
     });
-    
+
     const convertedQuery = {
       status: req.query.status ? req.query.status.toUpperCase() : undefined,
     };
-    
+
     const { error } = statusValidationSchema.validate(convertedQuery);
-    
+
     if (error) {
       return res.status(400).json({
         status: false,
@@ -135,9 +132,9 @@ const getAll = async (req, res, next) => {
         data: null,
       });
     }
-    
+
     if (req.query.status) {
-      const {status} = req.query;
+      const { status } = req.query;
       transaksi = await prisma.transaksi.findMany({
         where: {
           id_user: user.id,
@@ -151,9 +148,9 @@ const getAll = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
-      })
+      });
     } else {
       transaksi = await prisma.transaksi.findMany({
         where: {
@@ -176,15 +173,14 @@ const getAll = async (req, res, next) => {
           },
         },
         orderBy: {
-          created: "desc",
+          created: 'desc',
         },
       });
-      
     }
 
     return res.status(200).json({
       status: false,
-      message: "OK!",
+      message: 'OK!',
       err: null,
       data: transaksi,
     });
@@ -192,7 +188,7 @@ const getAll = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -221,15 +217,15 @@ const getById = async (req, res, next) => {
     if (!transaksiById) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request!",
-        err: "Transaksi tidak ditemukan",
+        message: 'Bad Request!',
+        err: 'Transaksi tidak ditemukan',
         data: null,
       });
     }
 
     return res.status(200).json({
       status: true,
-      message: "Transaksi berhasil dibuat",
+      message: 'Transaksi berhasil dibuat',
       err: null,
       data: transaksiById,
     });
@@ -237,7 +233,7 @@ const getById = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -253,7 +249,7 @@ const updateTransaksi = async (req, res, next) => {
     if (error) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
+        message: 'Bad Request',
         err: error.message,
         data: null,
       });
@@ -271,8 +267,8 @@ const updateTransaksi = async (req, res, next) => {
     if (!checkTransaksi) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
-        err: "Transaksi tidak ditemukan",
+        message: 'Bad Request',
+        err: 'Transaksi tidak ditemukan',
         data: null,
       });
     }
@@ -286,8 +282,8 @@ const updateTransaksi = async (req, res, next) => {
     if (!checkProduk) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
-        err: "Produk tidak ditemukan",
+        message: 'Bad Request',
+        err: 'Produk tidak ditemukan',
         data: null,
       });
     }
@@ -295,8 +291,8 @@ const updateTransaksi = async (req, res, next) => {
     if (jumlah <= 0) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
-        err: "Jumlah produk tidak mencukupi",
+        message: 'Bad Request',
+        err: 'Jumlah produk tidak mencukupi',
         data: null,
       });
     }
@@ -319,8 +315,8 @@ const updateTransaksi = async (req, res, next) => {
       if (stokBaru < 0) {
         return res.status(400).json({
           status: false,
-          message: "Bad Request",
-          err: "Stok tidak cukup",
+          message: 'Bad Request',
+          err: 'Stok tidak cukup',
           data: null,
         });
       }
@@ -356,7 +352,7 @@ const updateTransaksi = async (req, res, next) => {
 
     return res.status(201).json({
       status: true,
-      message: "Transaksi berhasil di update",
+      message: 'Transaksi berhasil di update',
       err: null,
       data: updateTransaksi,
     });
@@ -364,7 +360,7 @@ const updateTransaksi = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -383,8 +379,8 @@ const deleteTransaksi = async (req, res, next) => {
     if (!transaksi) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request!",
-        err: "Transaksi tidak ditemukan",
+        message: 'Bad Request!',
+        err: 'Transaksi tidak ditemukan',
         data: null,
       });
     }
@@ -410,7 +406,7 @@ const deleteTransaksi = async (req, res, next) => {
 
     return res.status(200).json({
       status: true,
-      message: "Produk deleted successfully",
+      message: 'Produk deleted successfully',
       err: null,
       data: null,
     });
@@ -418,7 +414,210 @@ const deleteTransaksi = async (req, res, next) => {
     next(err);
     return res.status(400).json({
       status: false,
-      message: "Bad Request",
+      message: 'Bad Request',
+      err: err.message,
+      data: null,
+    });
+  }
+};
+
+const validateTransaksi = async (req, res, next) => {
+  try {
+    const { value, error } = validateTransactionValidationSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: error.message,
+        data: null,
+      });
+    }
+
+    const { id } = req.params;
+    const { status, note } = value;
+
+    const checkTransaksi = await prisma.transaksi.findUnique({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!checkTransaksi) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'Transaksi tidak ditemukan',
+        data: null,
+      });
+    }
+
+    const updateTransaksi = await prisma.transaksi.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        status,
+        note,
+      },
+    });
+
+    return res.status(201).json({
+      status: true,
+      message: 'Transaksi berhasil di update',
+      err: null,
+      data: updateTransaksi,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const myTransaction = async (req, res, next) => {
+  try {
+    const { user } = req;
+    let transaksi = null;
+
+    const checkRole = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+    });
+
+    if (req.query.status) {
+      const { status } = req.query;
+      if (checkRole.role === 'PEMBELI') {
+        transaksi = await prisma.transaksi.findMany({
+          where: {
+            id_user: user.id,
+            status: status.toUpperCase(),
+          },
+          include: {
+            produk: {
+              include: {
+                media: true,
+              },
+            },
+            user: {
+              select: {
+                nama: true,
+              },
+            },
+          },
+          orderBy: {
+            created: 'desc',
+          },
+        });
+      } else if (checkRole.role === 'PENJUAL') {
+        transaksi = await prisma.transaksi.findMany({
+          where: {
+            produk: {
+              id_user: user.id,
+            },
+            status: status.toUpperCase(),
+          },
+          include: {
+            produk: {
+              include: {
+                media: true,
+              },
+            },
+            user: {
+              select: {
+                nama: true,
+              },
+            },
+          },
+          orderBy: {
+            created: 'desc',
+          },
+        });
+      }
+    } else {
+      if (checkRole.role === 'PEMBELI') {
+        transaksi = await prisma.transaksi.findMany({
+          where: {
+            id_user: user.id,
+          },
+          include: {
+            produk: {
+              include: {
+                media: true,
+              },
+            },
+            user: {
+              select: {
+                nama: true,
+              },
+            },
+          },
+          orderBy: {
+            created: 'desc',
+          },
+        });
+      } else if (checkRole.role === 'PENJUAL') {
+        transaksi = await prisma.transaksi.findMany({
+          where: {
+            produk: {
+              id_user: user.id,
+            },
+          },
+          include: {
+            produk: {
+              include: {
+                media: true,
+              },
+            },
+            user: {
+              select: {
+                nama: true,
+              },
+            },
+          },
+          orderBy: {
+            created: 'desc',
+          },
+        });
+      } else {
+        transaksi = await prisma.transaksi.findMany({
+          where: {
+            id_user: user.id,
+          },
+          include: {
+            produk: {
+              include: {
+                media: true,
+              },
+            },
+            user: {
+              select: {
+                nama: true,
+              },
+            },
+          },
+          orderBy: {
+            created: 'desc',
+          },
+        });
+      }
+    }
+
+    return res.status(200).json({
+      status: false,
+      message: 'OK!',
+      err: null,
+      data: transaksi.map((t) => {
+        return {
+          ...t,
+          jam: '08.00 - 08.15',
+          bukti_pembayaran: null,
+        };
+      }),
+    });
+  } catch (err) {
+    next(err);
+    return res.status(400).json({
+      status: false,
+      message: 'Bad Request',
       err: err.message,
       data: null,
     });
@@ -431,4 +630,6 @@ module.exports = {
   getById,
   updateTransaksi,
   deleteTransaksi,
+  validateTransaksi,
+  myTransaction,
 };

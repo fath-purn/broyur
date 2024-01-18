@@ -68,6 +68,7 @@ model Transaksi {
   jumlah     Int
   harga      Float
   alamat     String
+  note       String?
   status     Status     @default(DIPROSES)
   pembayaran Pembayaran
   user       User       @relation(fields: [id_user], references: [id])
