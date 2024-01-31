@@ -64,8 +64,9 @@ const createProduk = async (req, res, next) => {
         });
       }
     };
-
-    if (req.file) {
+    // if(req.files) console.log("asw")
+    if (req.files) {
+      console.log("test");
       await uploadFiles(req.files, createProduk.id);
     }
 
